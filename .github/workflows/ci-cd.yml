@@ -31,10 +31,13 @@ jobs:
 
       # SonarCloud Scan
       - name: SonarCloud Scan
-        run: mvn sonar:sonar \
-              -Dsonar.projectKey=soumyapatil02_poc1-githubaction-sonarqube-security-checks \
-              -Dsonar.organization=soumyapatil02 \
-              -Dsonar.host.url=https://sonarcloud.io
+        run: |
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=soumyapatil02_poc1-githubaction-sonarqube-security-checks \
+            -Dsonar.organization=soumyapatil02 \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
