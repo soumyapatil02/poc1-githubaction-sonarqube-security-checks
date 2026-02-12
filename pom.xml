@@ -83,7 +83,7 @@
                 <version>12.1.0</version>
                 <configuration>
                     <!-- For GitHub Actions (avoid 403 issue) -->
-                    <autoUpdate>false</autoUpdate>
+                    <!-- <autoUpdate>false</autoUpdate> -->
                     <!-- Don't fail build for POC -->
                     <failBuildOnCVSS>11</failBuildOnCVSS>
                     <format>HTML</format>
