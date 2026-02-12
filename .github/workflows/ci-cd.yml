@@ -1,0 +1,63 @@
+name: CI-CD-Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Required for SonarCloud
+
+      # Setup Java
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: maven
+
+      # Build + Test + Coverage + OWASP
+      - name: Build + Unit Tests + Coverage + Dependency Check
+        run: mvn clean verify
+
+      # SonarCloud Scan
+      - name: SonarCloud Scan
+        run: mvn sonar:sonar \
+              -Dsonar.projectKey=soumyapatil02_poc1-githubaction-sonarqube-security-checks \
+              -Dsonar.organization=soumyapatil02 \
+              -Dsonar.host.url=https://sonarcloud.io
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # Build Docker Image
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/poc-demo:latest .
+
+      # Trivy Image Scan
+      - name: Trivy Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/poc-demo:latest
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      # Login to DockerHub
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # Push Docker Image (only if everything succeeds)
+      - name: Push Docker Image
+        if: success()
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/poc-demo:latest
