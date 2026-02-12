@@ -8,18 +8,20 @@
     <groupId>com.soumya</groupId>
     <artifactId>poc-demo</artifactId>
     <version>1.0-SNAPSHOT</version>
-
     <packaging>jar</packaging>
 
+    <name>poc-demo</name>
+    <description>POC for GitHub Actions + SonarCloud + Security Checks</description>
+
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
-
+        <!-- SonarCloud -->
         <sonar.projectKey>soumyapatil02_poc1-githubaction-sonarqube-security-checks</sonar.projectKey>
         <sonar.organization>soumyapatil02</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-
     </properties>
 
     <dependencies>
@@ -27,7 +29,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.9.3</version>
+            <version>5.10.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -35,18 +37,29 @@
     <build>
         <plugins>
 
-            <!-- Surefire Plugin for Unit Tests -->
+            <!-- Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+
+            <!-- Surefire Plugin (Unit Testing) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
             </plugin>
 
             <!-- JaCoCo Code Coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
+                <version>0.8.11</version>
                 <executions>
                     <execution>
                         <goals>
@@ -67,7 +80,14 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>8.4.0</version>
+                <version>12.1.0</version>
+                <configuration>
+                    <!-- For GitHub Actions (avoid 403 issue) -->
+                    <autoUpdate>false</autoUpdate>
+                    <!-- Don't fail build for POC -->
+                    <failBuildOnCVSS>11</failBuildOnCVSS>
+                    <format>HTML</format>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
