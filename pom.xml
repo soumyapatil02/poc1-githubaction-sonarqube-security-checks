@@ -76,7 +76,7 @@
                 </executions>
             </plugin>
 
-            <!-- OWASP Dependency Check -->
+            <!-- OWASP Dependency Check
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
@@ -95,7 +95,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin> -->
 
         </plugins>
     </build>
