@@ -66,14 +66,13 @@ jobs:
       - name: Build Maven Project
         run: mvn clean package
 
-        
+
       - name: Check target folder
         run: ls -la target
-
-
 
       - name: Build Docker Image
         run: docker build -t soumyanadiger04/poc-demo:latest .
 
       - name: Push Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/poc-demo:latest
+        run: docker push soumyanadiger04/poc-demo:latest
+
