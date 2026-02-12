@@ -30,6 +30,7 @@ jobs:
         run: mvn clean verify
 
       # SonarCloud Scan
+      
       - name: SonarCloud Scan
         run: |
           mvn clean verify sonar:sonar \
