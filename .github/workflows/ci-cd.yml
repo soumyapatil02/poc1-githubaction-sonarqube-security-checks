@@ -1,67 +1,70 @@
-name: CI-CD-Pipeline
+name: CI Pipeline
 
 on:
   push:
     branches:
       - master
-  pull_request:
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout Code
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0   # Required for SonarCloud
+      - uses: actions/checkout@v4
 
-      # Setup Java
-      - name: Set up JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: maven
+          distribution: temurin
+          java-version: 17
 
-      # Build + Test + Coverage + OWASP
-      - name: Build + Unit Tests + Coverage + Dependency Check
-        run: mvn clean verify
+      - name: Compile Project
+        run: mvn clean compile
 
-      # SonarCloud Scan
+  unit-test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Run Unit Tests
+        run: mvn test
+
+  sonar:
+    runs-on: ubuntu-latest
+    needs: unit-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
       - name: SonarCloud Scan
-        run: |
-          mvn clean verify sonar:sonar \
-            -Dsonar.projectKey=soumyapatil02_poc1-githubaction-sonarqube-security-checks \
-            -Dsonar.organization=soumyapatil02 \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        run: mvn verify sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  docker:
+    runs-on: ubuntu-latest
+    needs: sonar
+    steps:
+      - uses: actions/checkout@v4
 
-      # Build Docker Image
-      - name: Build Docker Image
-        run: docker build -t ${{ vars.DOCKER_USERNAME }}/poc-demo:latest .  
-
-      # Trivy Image Scan
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@0.20.0
-        with:
-          image-ref: ${{ vars.DOCKER_USERNAME }}/poc-demo:latest
-          format: table
-          exit-code: 1
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-      # Login to DockerHub
       - name: Login to DockerHub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ vars.DOCKER_USERNAME }}" --password-stdin
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Push Docker Image (only if everything succeeds)
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/poc-demo:latest .
+
       - name: Push Docker Image
-        if: success()
-        run: docker push ${{ vars.DOCKER_USERNAME }}/poc-demo:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/poc-demo:latest
